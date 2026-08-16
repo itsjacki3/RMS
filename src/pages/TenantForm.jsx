@@ -55,13 +55,56 @@ export default function TenantForm() {
       status: tenant.status,
     }
 
-    // A database trigger keeps units.status in sync when a tenant is
-    // assigned, reassigned, vacated, or deleted — no extra queries needed here.
-    if (id) {
-      await supabase.from('tenants').update(payload).eq('id', id)
-    } else {
-      await supabase.from('tenants').insert(payload)
+      if (id) {
+    // Get the tenant's current unit before updating
+    const { data: oldTenant } = await supabase
+      .from('tenants')
+      .select('unit_id')
+      .eq('id', id)
+      .single()
+
+    // Update tenant
+    const { error } = await supabase
+      .from('tenants')
+      .update(payload)
+      .eq('id', id)
+
+    if (error) {
+      setErrors([error.message])
+      return
     }
+
+    // If the tenant was moved from a different unit, make the old unit vacant
+    if (oldTenant?.unit_id && oldTenant.unit_id !== tenant.unit_id) {
+      await supabase
+        .from('units')
+        .update({ status: 'vacant' })
+        .eq('id', oldTenant.unit_id)
+    }
+  } else {
+    // Create new tenant
+    const { error } = await supabase
+      .from('tenants')
+      .insert(payload)
+
+    if (error) {
+      setErrors([error.message])
+      return
+    }
+  }
+
+  // Make the newly assigned unit occupied
+  if (tenant.unit_id) {
+    const { error } = await supabase
+      .from('units')
+      .update({ status: 'occupied' })
+      .eq('id', tenant.unit_id)
+
+    if (error) {
+      setErrors([error.message])
+      return
+    }
+  }
     navigate('/tenants')
   }
 
