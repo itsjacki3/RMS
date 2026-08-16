@@ -49,8 +49,8 @@ export default function Maintenance() {
     load()
   }
 
-  async function updateCost(id, cost) {
-  const numericCost = cost === '' ? null : Number(cost)
+  async function updateCost(id, amount) {
+  const numericCost = amount === '' ? null : Number(amount)
 
   if (numericCost !== null && (Number.isNaN(numericCost) || numericCost < 0)) {
     setFlash({ type: 'error', message: 'Please enter a valid cost.' })
@@ -59,7 +59,7 @@ export default function Maintenance() {
 
   const { error } = await supabase
     .from('maintenance_requests')
-    .update({ cost: numericCost })
+    .update({ amount: numericCost })
     .eq('id', id)
 
   if (error) {
