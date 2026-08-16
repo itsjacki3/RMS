@@ -126,7 +126,7 @@ export default function Maintenance() {
                     type="number"
                     min="0"
                     step="0.01"
-                    defaultValue={r.cost ?? ''}
+                    defaultValue={r.Amount ?? ''}
                     placeholder="0.00"
                     onBlur={(e) => updateCost(r.id, e.target.value)}
                     style={{
