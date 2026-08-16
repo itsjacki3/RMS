@@ -41,11 +41,35 @@ export default function Tenants() {
 
   async function handleDelete(id, unitId) {
     if (!window.confirm('Remove this tenant record?')) return
-    await supabase.from('tenants').delete().eq('id', id)
-    setFlash({ type: 'success', message: 'Tenant removed.' })
+
+    // Set the tenant's unit to vacant
+    if (unitId) {
+      const { error: unitError } = await supabase
+        .from('units')
+        .update({ status: 'vacant' })
+        .eq('id', unitId)
+
+      if (unitError) {
+        setFlash({ type: 'error', message: unitError.message })
+        return
+      }
+    }
+
+    // Delete the tenant
+    const { error: tenantError } = await supabase
+      .from('tenants')
+      .delete()
+      .eq('id', id)
+
+    if (tenantError) {
+      setFlash({ type: 'error', message: tenantError.message })
+      return
+    }
+
+    setFlash({ type: 'success', message: 'Tenant removed and unit set to vacant.' })
     load()
   }
-
+  
   return (
     <Layout
       title="Tenants"
