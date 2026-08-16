@@ -49,6 +49,28 @@ export default function Maintenance() {
     load()
   }
 
+  async function updateCost(id, cost) {
+  const numericCost = cost === '' ? null : Number(cost)
+
+  if (numericCost !== null && (Number.isNaN(numericCost) || numericCost < 0)) {
+    setFlash({ type: 'error', message: 'Please enter a valid cost.' })
+    return
+  }
+
+  const { error } = await supabase
+    .from('maintenance_requests')
+    .update({ cost: numericCost })
+    .eq('id', id)
+
+  if (error) {
+    setFlash({ type: 'error', message: error.message })
+    return
+  }
+
+  setFlash({ type: 'success', message: 'Maintenance cost updated.' })
+  load()
+}
+
   async function handleDelete(id) {
     if (!window.confirm('Delete this request?')) return
     await supabase.from('maintenance_requests').delete().eq('id', id)
@@ -76,11 +98,11 @@ export default function Maintenance() {
         </form>
         <table>
           <thead>
-            <tr><th>Tenant</th><th>Unit</th><th>Category</th><th>Description</th><th>Priority</th><th>Reported</th><th>Status</th><th></th></tr>
+            <tr><th>Tenant</th><th>Unit</th><th>Category</th><th>Description</th><th>Priority</th><th>Reported</th><th>Status</th><th>Cost</th><th></th></tr>
           </thead>
           <tbody>
             {!loading && requests.length === 0 && (
-              <tr><td colSpan={8} className="empty-state">No maintenance requests logged.</td></tr>
+              <tr><td colSpan={9} className="empty-state">No maintenance requests logged.</td></tr>
             )}
             {requests.map((r) => (
               <tr key={r.id}>
@@ -98,6 +120,24 @@ export default function Maintenance() {
                   {r.status === 'resolved' && <Badge color="green">Resolved</Badge>}
                   {r.status === 'in_progress' && <Badge color="blue">In Progress</Badge>}
                   {r.status === 'open' && <Badge color="amber">Open</Badge>}
+                </td>
+                <td>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    defaultValue={r.cost ?? ''}
+                    placeholder="0.00"
+                    onBlur={(e) => updateCost(r.id, e.target.value)}
+                    style={{
+                      width: 100,
+                      padding: '7px 9px',
+                      border: '1px solid var(--border)',
+                      borderRadius: 8,
+                      background: '#fbfcfe',
+                      fontSize: 13
+                    }}
+                  />
                 </td>
                 <td className="row-actions">
                   {r.status !== 'resolved' && (
