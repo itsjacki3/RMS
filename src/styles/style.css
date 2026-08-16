@@ -465,3 +465,498 @@ footer.page-footer {
 }
 
 .row-actions a { cursor: pointer; }
+
+
+/* =====================================================
+   RESPONSIVE DESIGN
+   Phone + Tablet
+   ===================================================== */
+
+/* ---------------- Tablet ---------------- */
+@media (max-width: 1024px) {
+
+  .sidebar {
+    width: 220px;
+    padding: 20px 14px;
+  }
+
+  .main {
+    padding: 24px 24px 50px;
+  }
+
+  .brand {
+    padding-left: 6px;
+    padding-right: 6px;
+  }
+
+  .nav-item {
+    padding: 10px 11px;
+    gap: 9px;
+    font-size: 14px;
+  }
+
+  .stat-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+  }
+
+  .dash-row {
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+  }
+
+  .dash-row .chart-card {
+    grid-column: 1 / -1;
+  }
+
+  .card {
+    padding: 18px;
+  }
+
+  .table-card {
+    overflow-x: auto;
+  }
+
+  .table-card table {
+    min-width: 700px;
+  }
+
+  .topbar h1 {
+    font-size: 23px;
+  }
+}
+
+
+/* ---------------- Small tablets / large phones ---------------- */
+@media (max-width: 768px) {
+
+  .app-shell {
+    display: block;
+  }
+
+  /* Mobile sidebar */
+  .sidebar {
+    width: 100%;
+    height: auto;
+    min-height: auto;
+    padding: 12px 16px;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .brand {
+    padding: 4px 0 10px;
+  }
+
+  /*
+     Make navigation horizontally scrollable
+     instead of taking the whole screen.
+  */
+  .sidebar nav {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    scrollbar-width: thin;
+  }
+
+  .nav-group-label {
+    display: none;
+  }
+
+  .nav-item {
+    flex: 0 0 auto;
+    white-space: nowrap;
+    padding: 9px 12px;
+    margin: 0;
+  }
+
+  .sidebar-footer {
+    display: none;
+  }
+
+  .main {
+    width: 100%;
+    padding: 20px 18px 45px;
+  }
+
+  .topbar {
+    margin-bottom: 20px;
+  }
+
+  .topbar h1 {
+    font-size: 22px;
+  }
+
+  .topbar .subtitle {
+    font-size: 13px;
+  }
+
+  .page-actions {
+    width: 100%;
+  }
+
+  .page-actions .btn {
+    flex: 1;
+    justify-content: center;
+  }
+
+  .stat-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+
+  .stat-card {
+    gap: 10px;
+  }
+
+  .stat-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 11px;
+  }
+
+  .stat-icon svg {
+    width: 19px;
+    height: 19px;
+  }
+
+  .stat-value {
+    font-size: 22px;
+  }
+
+  .stat-label {
+    font-size: 12.5px;
+  }
+
+  .stat-sub {
+    font-size: 11px;
+  }
+
+  .dash-row {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .dash-row .chart-card {
+    grid-column: auto;
+  }
+
+  .chart-card {
+    overflow-x: auto;
+  }
+
+  .form-card {
+    max-width: 100%;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+
+  .filter-bar {
+    padding: 0 16px 16px;
+  }
+
+  .filter-bar select,
+  .filter-bar input[type="text"] {
+    width: 100%;
+  }
+
+  .table-card-head {
+    padding: 17px 16px 12px;
+  }
+
+  thead th {
+    padding: 11px 16px;
+  }
+
+  tbody td {
+    padding: 12px 16px;
+  }
+
+  .row-actions {
+    gap: 6px;
+  }
+}
+
+
+/* ---------------- Phones ---------------- */
+@media (max-width: 480px) {
+
+  html,
+  body {
+    width: 100%;
+    overflow-x: hidden;
+  }
+
+  .main {
+    padding: 16px 12px 35px;
+  }
+
+  /* Brand */
+  .brand {
+    padding: 3px 0 9px;
+  }
+
+  .brand-mark {
+    width: 34px;
+    height: 34px;
+    border-radius: 9px;
+  }
+
+  .brand-name {
+    font-size: 17px;
+  }
+
+  /* Navigation */
+  .sidebar {
+    padding: 10px 12px;
+  }
+
+  .sidebar nav {
+    gap: 5px;
+    padding-bottom: 3px;
+  }
+
+  .nav-item {
+    font-size: 12.5px;
+    padding: 8px 10px;
+    gap: 6px;
+  }
+
+  .nav-item svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  /* Header */
+  .topbar {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .topbar h1 {
+    font-size: 20px;
+  }
+
+  .topbar .subtitle {
+    font-size: 12.5px;
+  }
+
+  .page-actions {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  /* Cards */
+  .card {
+    border-radius: 14px;
+    padding: 15px;
+  }
+
+  /* Stats */
+  .stat-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .stat-card {
+    align-items: center;
+  }
+
+  .stat-icon {
+    width: 42px;
+    height: 42px;
+  }
+
+  .stat-value {
+    font-size: 21px;
+  }
+
+  /* Dashboard */
+  .dash-row {
+    gap: 10px;
+  }
+
+  .mini-stat .stat-icon {
+    width: 46px;
+    height: 46px;
+    margin-bottom: 10px;
+  }
+
+  .mini-stat .stat-value {
+    font-size: 21px;
+  }
+
+  /* Tables */
+  .table-card {
+    border-radius: 14px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .table-card table {
+    min-width: 650px;
+  }
+
+  thead th {
+    font-size: 11px;
+    padding: 10px 13px;
+  }
+
+  tbody td {
+    font-size: 13px;
+    padding: 11px 13px;
+  }
+
+  /*
+     Horizontal scrolling is intentional for tables.
+     It prevents columns from becoming unreadably narrow.
+  */
+  .table-card::after {
+    content: "Swipe left/right to view more";
+    display: block;
+    padding: 8px 14px;
+    font-size: 11px;
+    color: var(--muted);
+    text-align: center;
+    border-top: 1px solid var(--border);
+  }
+
+  /* Forms */
+  .field {
+    margin-bottom: 13px;
+  }
+
+  .field label {
+    font-size: 12.5px;
+  }
+
+  .field input,
+  .field select,
+  .field textarea {
+    width: 100%;
+    font-size: 16px;
+    padding: 11px 12px;
+  }
+
+  .form-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .form-actions .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  /* Buttons */
+  .btn {
+    min-height: 42px;
+    padding: 10px 14px;
+  }
+
+  .btn-sm {
+    min-height: 38px;
+  }
+
+  /* Filter */
+  .filter-bar {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 8px;
+    padding: 0 14px 14px;
+  }
+
+  /* Login */
+  .login-wrap {
+    padding: 14px;
+  }
+
+  .login-card {
+    padding: 30px 20px;
+    border-radius: 18px;
+  }
+
+  .login-card h2 {
+    font-size: 20px;
+  }
+
+  /* Footer */
+  footer.page-footer {
+    text-align: center;
+    margin-top: 22px;
+    font-size: 11.5px;
+  }
+}
+
+
+/* ---------------- Very small phones ---------------- */
+@media (max-width: 360px) {
+
+  .main {
+    padding-left: 9px;
+    padding-right: 9px;
+  }
+
+  .sidebar {
+    padding-left: 9px;
+    padding-right: 9px;
+  }
+
+  .nav-item {
+    font-size: 11.5px;
+    padding: 7px 8px;
+  }
+
+  .topbar h1 {
+    font-size: 18px;
+  }
+
+  .card {
+    padding: 13px;
+  }
+
+  .stat-value {
+    font-size: 19px;
+  }
+
+  .btn {
+    font-size: 13px;
+  }
+}
+
+
+/* ---------------- Touch devices ---------------- */
+@media (hover: none) and (pointer: coarse) {
+
+  .nav-item,
+  .btn,
+  button,
+  .row-actions a,
+  .row-actions button {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .nav-item {
+    min-height: 42px;
+  }
+
+  .btn {
+    min-height: 44px;
+  }
+
+  .row-actions button,
+  .row-actions a {
+    min-width: 40px;
+    min-height: 40px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
