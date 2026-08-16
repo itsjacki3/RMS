@@ -282,7 +282,7 @@ button { font-family: inherit; cursor: pointer; }
 .legend .dot.coral { background: var(--coral); }
 
 /* ---------------- Tables ---------------- */
-.table-card { padding: 0; overflow: hidden; }
+.table-card { padding: 0; overflow: auto; max-height: 500px;}
 .table-card-head {
   display: flex;
   align-items: center;
