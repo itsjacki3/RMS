@@ -31,7 +31,8 @@ export default function Dashboard() {
         ],
       },
       options: {
-        aspectRatio: window.innerWidth < 640 ? 1.15 : 2,
+        responsive: true,
+        maintainAspectRatio: false,
         plugins: { legend: { display: false } },
         scales: {
           x: { grid: { display: false } },
@@ -114,33 +115,53 @@ export default function Dashboard() {
             </div>
             <Link to="/maintenance" className="btn btn-outline maint-link">View all</Link>
           </div>
-
+         
           <div className="dash-row">
-            <div className="card mini-stat">
-              <div className="stat-icon violet"><Icon name="tenants" /></div>
-              <div className="stat-label">Active Tenants</div>
-              <div className="stat-value">{stats.activeTenants}</div>
+            {/* Left column: two stacked statistics */}
+            <div className="dash-side-stats">
+
+              <div className="card mini-stat">
+                <div className="stat-icon violet">
+                  <Icon name="tenants" />
+                </div>
+                <div className="stat-label">Active Tenants</div>
+                <div className="stat-value">{stats.activeTenants}</div>
+              </div>
+
+              <div className="card mini-stat">
+                <div className="stat-icon teal">
+                  <Icon name="rent" />
+                </div>
+                <div className="stat-label">Collected This Month</div>
+                <div className="stat-value">
+                  {formatKES(stats.collectedThisMonth)}
+                </div>
+              </div>
+
             </div>
 
-            <div className="card mini-stat">
-              <div className="stat-icon teal"><Icon name="rent" /></div>
-              <div className="stat-label">Collected This Month</div>
-              <div className="stat-value">{formatKES(stats.collectedThisMonth)}</div>
-            </div>
-
+            {/* Right column: graph */}
             <div className="card chart-card">
               <div className="chart-head">
                 <div>
                   <h3>Billed vs Collected</h3>
                   <div className="legend">
-                    <span><span className="dot coral"></span>Billed (rent, water, garbage)</span>
-                    <span><span className="dot teal"></span>Collected</span>
+                    <span>
+                      <span className="dot coral"></span>
+                      Billed (rent, water, garbage)
+                    </span>
+                    <span>
+                      <span className="dot teal"></span>
+                      Collected
+                    </span>
                   </div>
                 </div>
               </div>
+
               <canvas ref={canvasRef} height="140"></canvas>
             </div>
           </div>
+
         </>
       )}
     </Layout>
