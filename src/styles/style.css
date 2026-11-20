@@ -255,55 +255,163 @@ button { font-family: inherit; cursor: pointer; }
 
 /* ---------------- Layout grid for dashboard bottom row ---------------- */
 
+
+/* Dashboard layout */
 .dash-row {
   display: grid;
   grid-template-columns: minmax(220px, 1fr) minmax(0, 3fr);
   gap: 20px;
-  align-items: stretch;
+  align-items: start;
+  width: 100%;
 }
 
+/* Two compact statistic cards */
 .dash-side-stats {
-  display: grid;
-  grid-template-rows: repeat(2, minmax(0, 1fr));
+  display: flex;
+  flex-direction: column;
   gap: 18px;
   min-width: 0;
+  height: auto;
 }
 
 .dash-side-stats .mini-stat {
-  min-width: 0;
-  min-height: 0;
+  width: 100%;
+  min-height: 190px;
+  height: 190px;
+  padding: 22px;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  padding: 20px;
+  flex-shrink: 0;
 }
 
-.dash-row .chart-card {
-  min-width: 0;
+/* Chart container */
+.dash-row > .chart-card {
   width: 100%;
-  min-height: 340px;
-  height: 100%;
+  min-width: 0;
+  height: 420px;
+  min-height: 420px;
+  padding: 24px;
+  position: relative;
 }
 
-.dash-row .chart-card canvas {
+/* Chart canvas */
+.dash-row > .chart-card canvas {
   width: 100% !important;
+  height: 300px !important;
 }
 
+/* Responsive layout */
 @media (max-width: 768px) {
   .dash-row {
     grid-template-columns: 1fr;
   }
 
   .dash-side-stats {
-    grid-template-rows: auto;
+    display: flex;
+    flex-direction: column;
   }
 
   .dash-side-stats .mini-stat {
+    height: 150px;
+    min-height: 150px;
+  }
+
+  .dash-row > .chart-card {
+    height: 350px;
+    min-height: 350px;
+  }
+
+  .dash-row > .chart-card canvas {
+    height: 250px !important;
+  }
+}
+/* Dashboard bottom section */
+.dash-row {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) minmax(0, 1.6fr);
+  gap: 18px;
+  align-items: stretch;
+  width: 100%;
+  min-width: 0;
+}
+
+/* Two compact statistic cards */
+.dash-side-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+
+.dash-side-stats .mini-stat {
+  width: 100%;
+  height: 145px;
+  min-height: 145px;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+/* Smaller icons and text */
+.mini-stat .stat-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  margin-bottom: 10px;
+}
+
+.mini-stat .stat-value {
+  font-size: 22px;
+  margin-top: 4px;
+}
+
+.mini-stat .stat-label {
+  font-size: 13px;
+}
+
+/* Chart */
+.dash-row > .chart-card {
+  width: 100%;
+  min-width: 0;
+  height: 340px;
+  min-height: 340px;
+  padding: 20px;
+  position: relative;
+}
+
+.dash-row > .chart-card canvas {
+  width: 100% !important;
+  height: 245px !important;
+  max-height: 245px;
+}
+
+/* Tablet and mobile */
+@media (max-width: 768px) {
+  .dash-row {
+    grid-template-columns: 1fr;
+  }
+
+  .dash-side-stats {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .dash-side-stats .mini-stat {
+    height: 130px;
     min-height: 130px;
   }
 
-  .dash-row .chart-card {
-    min-height: 300px;
+  .dash-row > .chart-card {
+    height: 340px;
+    min-height: 340px;
+  }
+}
+
+@media (max-width: 480px) {
+  .dash-side-stats {
+    grid-template-columns: 1fr;
   }
 }
 
