@@ -2,9 +2,9 @@ import { useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import Layout from '../components/Layout'
 import Badge from '../components/Badge'
-import Alert from '../components/Alert'
 import Icon from '../components/Icon'
 import { supabase } from '../supabaseClient'
+import { useToast } from '../context/ToastContext'
 import { formatDate } from '../lib/constants'
 
 function truncate(str, n) {
@@ -13,11 +13,11 @@ function truncate(str, n) {
 }
 
 export default function Maintenance() {
+  const { notify } = useToast()
   const [searchParams, setSearchParams] = useSearchParams()
   const statusFilter = searchParams.get('status') || ''
   const [requests, setRequests] = useState([])
   const [loading, setLoading] = useState(true)
-  const [flash, setFlash] = useState(null)
 
   useEffect(() => { load() }, [statusFilter])
 
@@ -45,36 +45,14 @@ export default function Maintenance() {
     const payload = { status }
     if (status === 'resolved') payload.date_resolved = new Date().toISOString().slice(0, 10)
     await supabase.from('maintenance_requests').update(payload).eq('id', id)
-    setFlash({ type: 'success', message: 'Request status updated.' })
+    notify('Request status updated.')
     load()
   }
-
-  async function updateCost(id, Amount) {
-  const numericCost = Amount === '' ? null : Number(Amount)
-
-  if (numericCost !== null && (Number.isNaN(numericCost) || numericCost < 0)) {
-    setFlash({ type: 'error', message: 'Please enter a valid cost.' })
-    return
-  }
-
-  const { error } = await supabase
-    .from('maintenance_requests')
-    .update({ Amount: numericCost })
-    .eq('id', id)
-
-  if (error) {
-    setFlash({ type: 'error', message: error.message })
-    return
-  }
-
-  setFlash({ type: 'success', message: 'Maintenance cost updated.' })
-  load()
-}
 
   async function handleDelete(id) {
     if (!window.confirm('Delete this request?')) return
     await supabase.from('maintenance_requests').delete().eq('id', id)
-    setFlash({ type: 'success', message: 'Request deleted.' })
+    notify('Request deleted.')
     load()
   }
 
@@ -84,7 +62,6 @@ export default function Maintenance() {
       subtitle="Repair and maintenance requests from tenants"
       actions={<Link to="/maintenance/new" className="btn btn-primary">+ Log Request</Link>}
     >
-      <Alert type={flash?.type}>{flash?.message}</Alert>
 
       <div className="card table-card">
         <div className="table-card-head"><h3>Requests ({requests.length})</h3></div>
@@ -96,13 +73,13 @@ export default function Maintenance() {
             <option value="resolved">Resolved</option>
           </select>
         </form>
-        <table>
+        <div className="table-scroll"><table>
           <thead>
-            <tr><th>Tenant</th><th>Unit</th><th>Category</th><th>Description</th><th>Priority</th><th>Reported</th><th>Status</th><th>Cost</th><th></th></tr>
+            <tr><th>Tenant</th><th>Unit</th><th>Category</th><th>Description</th><th>Priority</th><th>Reported</th><th>Status</th><th></th></tr>
           </thead>
           <tbody>
             {!loading && requests.length === 0 && (
-              <tr><td colSpan={9} className="empty-state">No maintenance requests logged.</td></tr>
+              <tr><td colSpan={8} className="empty-state">No maintenance requests logged.</td></tr>
             )}
             {requests.map((r) => (
               <tr key={r.id}>
@@ -121,24 +98,6 @@ export default function Maintenance() {
                   {r.status === 'in_progress' && <Badge color="blue">In Progress</Badge>}
                   {r.status === 'open' && <Badge color="amber">Open</Badge>}
                 </td>
-                <td>
-                  <input
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    defaultValue={r.Amount ?? ''}
-                    placeholder="0.00"
-                    onBlur={(e) => updateCost(r.id, e.target.value)}
-                    style={{
-                      width: 100,
-                      padding: '7px 9px',
-                      border: '1px solid var(--border)',
-                      borderRadius: 8,
-                      background: '#fbfcfe',
-                      fontSize: 13
-                    }}
-                  />
-                </td>
                 <td className="row-actions">
                   {r.status !== 'resolved' && (
                     r.status === 'open'
@@ -150,7 +109,7 @@ export default function Maintenance() {
               </tr>
             ))}
           </tbody>
-        </table>
+        </table></div>
       </div>
     </Layout>
   )

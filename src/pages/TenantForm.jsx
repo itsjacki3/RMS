@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import Layout from '../components/Layout'
+import DateInput from '../components/DateInput'
 import { supabase } from '../supabaseClient'
+import { useToast } from '../context/ToastContext'
 
 const EMPTY = {
   unit_id: '', full_name: '', phone: '', email: '',
@@ -9,6 +11,7 @@ const EMPTY = {
 }
 
 export default function TenantForm() {
+  const { notify } = useToast()
   const { id } = useParams()
   const navigate = useNavigate()
   const [tenant, setTenant] = useState(EMPTY)
@@ -55,56 +58,14 @@ export default function TenantForm() {
       status: tenant.status,
     }
 
-      if (id) {
-    // Get the tenant's current unit before updating
-    const { data: oldTenant } = await supabase
-      .from('tenants')
-      .select('unit_id')
-      .eq('id', id)
-      .single()
+    // A database trigger keeps units.status in sync when a tenant is
+    // assigned, reassigned, vacated, or deleted — no extra queries needed here.
+    const { error } = id
+      ? await supabase.from('tenants').update(payload).eq('id', id)
+      : await supabase.from('tenants').insert(payload)
 
-    // Update tenant
-    const { error } = await supabase
-      .from('tenants')
-      .update(payload)
-      .eq('id', id)
-
-    if (error) {
-      setErrors([error.message])
-      return
-    }
-
-    // If the tenant was moved from a different unit, make the old unit vacant
-    if (oldTenant?.unit_id && oldTenant.unit_id !== tenant.unit_id) {
-      await supabase
-        .from('units')
-        .update({ status: 'vacant' })
-        .eq('id', oldTenant.unit_id)
-    }
-  } else {
-    // Create new tenant
-    const { error } = await supabase
-      .from('tenants')
-      .insert(payload)
-
-    if (error) {
-      setErrors([error.message])
-      return
-    }
-  }
-
-  // Make the newly assigned unit occupied
-  if (tenant.unit_id) {
-    const { error } = await supabase
-      .from('units')
-      .update({ status: 'occupied' })
-      .eq('id', tenant.unit_id)
-
-    if (error) {
-      setErrors([error.message])
-      return
-    }
-  }
+    if (error) { notify('Could not save tenant: ' + error.message, 'error'); return }
+    notify(id ? `Tenant "${payload.full_name}" updated.` : `Tenant "${payload.full_name}" saved.`)
     navigate('/tenants')
   }
 
@@ -151,11 +112,12 @@ export default function TenantForm() {
             </div>
             <div className="field">
               <label>Move-in Date</label>
-              <input type="date" value={tenant.move_in_date || ''} onChange={(e) => update('move_in_date', e.target.value)} />
+              <DateInput value={tenant.move_in_date || ''} onChange={(v) => update('move_in_date', v)} />
+              <div className="field-hint">Rent billing starts from this month.</div>
             </div>
             <div className="field">
               <label>Move-out Date</label>
-              <input type="date" value={tenant.move_out_date || ''} onChange={(e) => update('move_out_date', e.target.value)} />
+              <DateInput value={tenant.move_out_date || ''} onChange={(v) => update('move_out_date', v)} />
             </div>
           </div>
           <div className="form-actions">

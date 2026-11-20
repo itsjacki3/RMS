@@ -2,15 +2,15 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import Layout from '../components/Layout'
 import Badge from '../components/Badge'
-import Alert from '../components/Alert'
 import Icon from '../components/Icon'
 import { supabase } from '../supabaseClient'
+import { useToast } from '../context/ToastContext'
 import { formatNumber } from '../lib/constants'
 
 export default function Units() {
+  const { notify } = useToast()
   const [units, setUnits] = useState([])
   const [loading, setLoading] = useState(true)
-  const [flash, setFlash] = useState(null)
 
   useEffect(() => { load() }, [])
 
@@ -32,11 +32,11 @@ export default function Units() {
       .from('tenants').select('*', { count: 'exact', head: true }).eq('unit_id', id).eq('status', 'active')
 
     if (count > 0) {
-      setFlash({ type: 'error', message: 'Cannot delete a unit that has an active tenant.' })
+      notify('Cannot delete a unit that has an active tenant.', 'error')
       return
     }
     await supabase.from('units').delete().eq('id', id)
-    setFlash({ type: 'success', message: 'Unit removed.' })
+    notify('Unit removed.')
     load()
   }
 
@@ -46,11 +46,10 @@ export default function Units() {
       subtitle="Manage the apartment units in your property"
       actions={<Link to="/units/new" className="btn btn-primary">+ Add Unit</Link>}
     >
-      <Alert type={flash?.type}>{flash?.message}</Alert>
 
       <div className="card table-card">
         <div className="table-card-head"><h3>All Units ({units.length})</h3></div>
-        <table>
+        <div className="table-scroll"><table>
           <thead>
             <tr><th>Unit</th><th>Floor</th><th>Bedrooms</th><th>Rent (KES)</th><th>Status</th><th>Current Tenant</th><th></th></tr>
           </thead>
@@ -79,7 +78,7 @@ export default function Units() {
               </tr>
             ))}
           </tbody>
-        </table>
+        </table></div>
       </div>
     </Layout>
   )

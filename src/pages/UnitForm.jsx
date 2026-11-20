@@ -2,10 +2,12 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import Layout from '../components/Layout'
 import { supabase } from '../supabaseClient'
+import { useToast } from '../context/ToastContext'
 
 const EMPTY = { unit_number: '', floor: '', bedrooms: 1, rent_amount: '', status: 'vacant' }
 
 export default function UnitForm() {
+  const { notify } = useToast()
   const { id } = useParams()
   const navigate = useNavigate()
   const [unit, setUnit] = useState(EMPTY)
@@ -39,11 +41,15 @@ export default function UnitForm() {
       status: unit.status,
     }
 
-    if (id) {
-      await supabase.from('units').update(payload).eq('id', id)
-    } else {
-      await supabase.from('units').insert(payload)
+    const { error } = id
+      ? await supabase.from('units').update(payload).eq('id', id)
+      : await supabase.from('units').insert(payload)
+
+    if (error) {
+      notify(error.code === '23505' ? `A unit numbered "${payload.unit_number}" already exists.` : 'Could not save unit: ' + error.message, 'error')
+      return
     }
+    notify(id ? `Unit ${payload.unit_number} updated.` : `Unit ${payload.unit_number} saved.`)
     navigate('/units')
   }
 

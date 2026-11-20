@@ -1,12 +1,15 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import Layout from '../components/Layout'
+import DateInput from '../components/DateInput'
 import { supabase } from '../supabaseClient'
+import { useToast } from '../context/ToastContext'
 import { todayISO } from '../lib/constants'
 
 const CATEGORIES = { plumbing: 'Plumbing', electrical: 'Electrical', structural: 'Structural', appliance: 'Appliance', general: 'General' }
 
 export default function MaintenanceForm() {
+  const { notify } = useToast()
   const navigate = useNavigate()
   const [tenants, setTenants] = useState([])
   const [errors, setErrors] = useState([])
@@ -30,13 +33,14 @@ export default function MaintenanceForm() {
     const errs = []
     if (!form.tenant_id) errs.push('Please select a tenant.')
     if (!form.description.trim()) errs.push('Please describe the issue.')
+    if (!form.date_reported) errs.push('Enter a valid date reported (dd/mm/yy).')
     setErrors(errs)
     if (errs.length) return
 
     const tenantRow = tenants.find((t) => String(t.id) === String(form.tenant_id))
     const unitId = tenantRow?.unit_id || null
 
-    await supabase.from('maintenance_requests').insert({
+    const { error } = await supabase.from('maintenance_requests').insert({
       tenant_id: form.tenant_id,
       unit_id: unitId,
       category: form.category,
@@ -44,6 +48,8 @@ export default function MaintenanceForm() {
       priority: form.priority,
       date_reported: form.date_reported,
     })
+    if (error) { notify('Could not log request: ' + error.message, 'error'); return }
+    notify('Maintenance request logged.')
     navigate('/maintenance')
   }
 
@@ -81,7 +87,7 @@ export default function MaintenanceForm() {
             </div>
             <div className="field">
               <label>Date Reported</label>
-              <input type="date" value={form.date_reported} onChange={(e) => update('date_reported', e.target.value)} />
+              <DateInput value={form.date_reported} onChange={(v) => update('date_reported', v)} />
             </div>
           </div>
           <div className="field">

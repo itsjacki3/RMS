@@ -5,7 +5,8 @@ import Layout from '../components/Layout'
 import Icon from '../components/Icon'
 import { supabase } from '../supabaseClient'
 import { useAuth } from '../context/AuthContext'
-import { MONTHS_SHORT, formatKES } from '../lib/constants'
+import { ensureCharges } from '../lib/api'
+import { formatKES, lastMonths, sum } from '../lib/constants'
 
 export default function Dashboard() {
   const { profile } = useAuth()
@@ -14,9 +15,7 @@ export default function Dashboard() {
   const canvasRef = useRef(null)
   const chartRef = useRef(null)
 
-  useEffect(() => {
-    loadDashboard()
-  }, [])
+  useEffect(() => { loadDashboard() }, [])
 
   useEffect(() => {
     if (!chartData || !canvasRef.current) return
@@ -27,11 +26,12 @@ export default function Dashboard() {
       data: {
         labels: chartData.labels,
         datasets: [
-          { label: 'Rent', data: chartData.rent, backgroundColor: '#23c7b7', borderRadius: 6, maxBarThickness: 22 },
-          { label: 'Water & Garbage', data: chartData.bills, backgroundColor: '#ff7a50', borderRadius: 6, maxBarThickness: 22 },
+          { label: 'Billed', data: chartData.billed, backgroundColor: '#ff7a50', borderRadius: 6, maxBarThickness: 22 },
+          { label: 'Collected', data: chartData.collected, backgroundColor: '#23c7b7', borderRadius: 6, maxBarThickness: 22 },
         ],
       },
       options: {
+        aspectRatio: window.innerWidth < 640 ? 1.15 : 2,
         plugins: { legend: { display: false } },
         scales: {
           x: { grid: { display: false } },
@@ -44,71 +44,40 @@ export default function Dashboard() {
   }, [chartData])
 
   async function loadDashboard() {
-    const [totalUnits, occupiedUnits, vacantUnits] = await Promise.all([
-      supabase.from('units').select('*', { count: 'exact', head: true }),
-      supabase.from('units').select('*', { count: 'exact', head: true }).eq('status', 'occupied'),
-      supabase.from('units').select('*', { count: 'exact', head: true }).eq('status', 'vacant'),
+    await ensureCharges()
+    const months = lastMonths(6)
+    const start = `${months[0].key}-01`
+    const thisKey = months[months.length - 1].key
+    const count = (q) => q.then((r) => r.count || 0)
+
+    const [totalUnits, occupiedUnits, vacantUnits, openMaintenance, highPriorityOpen, activeTenants,
+      balances, ledger, payments] = await Promise.all([
+      count(supabase.from('units').select('*', { count: 'exact', head: true })),
+      count(supabase.from('units').select('*', { count: 'exact', head: true }).eq('status', 'occupied')),
+      count(supabase.from('units').select('*', { count: 'exact', head: true }).eq('status', 'vacant')),
+      count(supabase.from('maintenance_requests').select('*', { count: 'exact', head: true }).in('status', ['open', 'in_progress'])),
+      count(supabase.from('maintenance_requests').select('*', { count: 'exact', head: true }).in('status', ['open', 'in_progress']).eq('priority', 'high')),
+      count(supabase.from('tenants').select('*', { count: 'exact', head: true }).eq('status', 'active')),
+      supabase.from('tenant_balances').select('months_overdue'),
+      supabase.from('tenant_ledger').select('period_start, total_charge').gte('period_start', start),
+      supabase.from('payments').select('amount, payment_date').gte('payment_date', start),
     ])
 
-    const [overdueRent, overdueWater, overdueGarbage] = await Promise.all([
-      supabase.from('rent_payments').select('*', { count: 'exact', head: true }).eq('status', 'overdue'),
-      supabase.from('water_bills').select('*', { count: 'exact', head: true }).eq('status', 'overdue'),
-      supabase.from('garbage_bills').select('*', { count: 'exact', head: true }).eq('status', 'overdue'),
-    ])
-
-    const [openMaintenance, highPriorityOpen, activeTenants] = await Promise.all([
-      supabase.from('maintenance_requests').select('*', { count: 'exact', head: true }).in('status', ['open', 'in_progress']),
-      supabase.from('maintenance_requests').select('*', { count: 'exact', head: true }).in('status', ['open', 'in_progress']).eq('priority', 'high'),
-      supabase.from('tenants').select('*', { count: 'exact', head: true }).eq('status', 'active'),
-    ])
-
-    const now = new Date()
-    const thisMonth = now.getMonth() + 1
-    const thisYear = now.getFullYear()
-
-    const { data: rentRows } = await supabase
-      .from('rent_payments')
-      .select('amount_paid')
-      .eq('status', 'paid')
-      .eq('period_month', thisMonth)
-      .eq('period_year', thisYear)
-    const rentThisMonth = (rentRows || []).reduce((sum, r) => sum + Number(r.amount_paid || 0), 0)
+    const billed = Object.fromEntries(months.map((m) => [m.key, 0]))
+    const collected = Object.fromEntries(months.map((m) => [m.key, 0]))
+    ;(ledger.data || []).forEach((r) => { const k = r.period_start.slice(0, 7); if (k in billed) billed[k] += Number(r.total_charge) })
+    ;(payments.data || []).forEach((r) => { const k = r.payment_date.slice(0, 7); if (k in collected) collected[k] += Number(r.amount) })
 
     setStats({
-      totalUnits: totalUnits.count || 0,
-      occupiedUnits: occupiedUnits.count || 0,
-      vacantUnits: vacantUnits.count || 0,
-      overdueCount: (overdueRent.count || 0) + (overdueWater.count || 0) + (overdueGarbage.count || 0),
-      openMaintenance: openMaintenance.count || 0,
-      highPriorityOpen: highPriorityOpen.count || 0,
-      activeTenants: activeTenants.count || 0,
-      rentThisMonth,
+      totalUnits, occupiedUnits, vacantUnits, openMaintenance, highPriorityOpen, activeTenants,
+      overdueTenants: (balances.data || []).filter((b) => Number(b.months_overdue) > 0).length,
+      collectedThisMonth: collected[thisKey],
     })
-
-    // Last 6 months revenue chart
-    const labels = []
-    const rentSeries = []
-    const billsSeries = []
-    for (let i = 5; i >= 0; i--) {
-      const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
-      const m = d.getMonth() + 1
-      const y = d.getFullYear()
-      labels.push(MONTHS_SHORT[m])
-
-      const { data: rentData } = await supabase
-        .from('rent_payments').select('amount_paid').eq('status', 'paid').eq('period_month', m).eq('period_year', y)
-      rentSeries.push(Math.round((rentData || []).reduce((s, r) => s + Number(r.amount_paid || 0), 0)))
-
-      const { data: waterData } = await supabase
-        .from('water_bills').select('amount').eq('status', 'paid').eq('billing_month', m).eq('billing_year', y)
-      const { data: garbageData } = await supabase
-        .from('garbage_bills').select('amount').eq('status', 'paid').eq('billing_month', m).eq('billing_year', y)
-      const waterSum = (waterData || []).reduce((s, r) => s + Number(r.amount || 0), 0)
-      const garbageSum = (garbageData || []).reduce((s, r) => s + Number(r.amount || 0), 0)
-      billsSeries.push(Math.round(waterSum + garbageSum))
-    }
-
-    setChartData({ labels, rent: rentSeries, bills: billsSeries })
+    setChartData({
+      labels: months.map((m) => m.label),
+      billed: months.map((m) => Math.round(billed[m.key])),
+      collected: months.map((m) => Math.round(collected[m.key])),
+    })
   }
 
   return (
@@ -130,20 +99,20 @@ export default function Dashboard() {
               <div className="stat-icon blue"><Icon name="circleClock" /></div>
               <div><div className="stat-label">Vacant Units</div><div className="stat-value">{stats.vacantUnits}</div></div>
             </div>
-            <div className="card stat-card">
+            <Link to="/rent?status=overdue" className="card stat-card" style={{ textDecoration: 'none', color: 'inherit' }}>
               <div className="stat-icon pink"><Icon name="clock" /></div>
-              <div><div className="stat-label">Overdue Bills</div><div className="stat-value">{stats.overdueCount}</div></div>
-            </div>
+              <div><div className="stat-label">Overdue Tenants</div><div className="stat-value">{stats.overdueTenants}</div></div>
+            </Link>
           </div>
 
-          <div className="card" style={{ marginBottom: 20, display: 'flex', alignItems: 'center', gap: 18 }}>
+          <div className="card maint-card">
             <div className="stat-icon amber"><Icon name="maintenance" /></div>
             <div>
               <div className="stat-label">Open Maintenance Requests</div>
               <div className="stat-value">{stats.openMaintenance}</div>
               <div className="stat-sub">{stats.highPriorityOpen} marked high priority</div>
             </div>
-            <Link to="/maintenance" className="btn btn-outline" style={{ marginLeft: 'auto' }}>View all</Link>
+            <Link to="/maintenance" className="btn btn-outline maint-link">View all</Link>
           </div>
 
           <div className="dash-row">
@@ -155,17 +124,17 @@ export default function Dashboard() {
 
             <div className="card mini-stat">
               <div className="stat-icon teal"><Icon name="rent" /></div>
-              <div className="stat-label">Rent Collected This Month</div>
-              <div className="stat-value">{formatKES(stats.rentThisMonth)}</div>
+              <div className="stat-label">Collected This Month</div>
+              <div className="stat-value">{formatKES(stats.collectedThisMonth)}</div>
             </div>
 
             <div className="card chart-card">
               <div className="chart-head">
                 <div>
-                  <h3>Revenue</h3>
+                  <h3>Billed vs Collected</h3>
                   <div className="legend">
-                    <span><span className="dot teal"></span>Rent</span>
-                    <span><span className="dot coral"></span>Water &amp; Garbage</span>
+                    <span><span className="dot coral"></span>Billed (rent, water, garbage)</span>
+                    <span><span className="dot teal"></span>Collected</span>
                   </div>
                 </div>
               </div>
