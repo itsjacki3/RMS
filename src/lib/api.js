@@ -48,3 +48,16 @@ export const adminUpdatePayment = (id, { amount, payment_date, method, notes }, 
     p_notes: notes || null,
     p_password: password,
   })
+
+/**
+ * Change a unit's rent from a given month onward (effectiveFrom = 'YYYY-MM-01').
+ * Bills from that month on are recalculated; earlier bills are untouched.
+ * A month in the past needs the admin password (pass it as `password`).
+ */
+export const setUnitRent = (unitId, newRent, effectiveFrom, password = null) =>
+  callAdmin('set_unit_rent', {
+    p_unit_id: Number(unitId),
+    p_new_rent: Number(newRent),
+    p_effective_from: effectiveFrom,
+    p_password: password,
+  })
