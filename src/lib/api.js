@@ -61,3 +61,19 @@ export const setUnitRent = (unitId, newRent, effectiveFrom, password = null) =>
     p_effective_from: effectiveFrom,
     p_password: password,
   })
+
+/**
+ * Read every row of a query, 1000 at a time (Supabase returns at most 1000 rows
+ * per request). `build` must return a fresh query each call, with a stable order:
+ *   const rows = await fetchAll(() => supabase.from('payments').select('*').order('id'))
+ */
+export async function fetchAll(build, pageSize = 1000) {
+  const out = []
+  for (let from = 0; ; from += pageSize) {
+    const { data, error } = await build().range(from, from + pageSize - 1)
+    if (error) throw new Error(error.message)
+    out.push(...(data || []))
+    if (!data || data.length < pageSize) break
+  }
+  return out
+}

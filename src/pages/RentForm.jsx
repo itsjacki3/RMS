@@ -69,7 +69,7 @@ export default function RentForm() {
   // When editing, work from the balance WITHOUT the payment being edited
   const balance = selected ? Number(selected.balance) + (isEdit && original ? Number(original.amount) : 0) : 0
   const after = balance - amount
-  const destination = back === 'profile' && form.tenant_id ? `/tenants/${form.tenant_id}` : '/rent'
+  const destination = back === 'profile' && form.tenant_id ? `/tenants/${form.tenant_id}?tab=payments` : '/rent'
 
   async function handleSubmit(e) {
     e.preventDefault()
@@ -166,7 +166,7 @@ export default function RentForm() {
                   <> ({selected.months_overdue} month{selected.months_overdue > 1 ? 's' : ''} overdue)</>
                 )}
                 {balance > 0 && (
-                  <button type="button" className="btn btn-outline btn-sm pay-full-btn"
+                  <button type="button" className="btn btn-outline btn-sm" style={{ marginLeft: 12 }}
                           onClick={() => update('amount', balance)}>Pay full balance</button>
                 )}
               </div>

@@ -3,9 +3,12 @@ import { Link } from 'react-router-dom'
 import Layout from '../components/Layout'
 import Badge from '../components/Badge'
 import Icon from '../components/Icon'
+import ExportButtons from '../components/ExportButtons'
+import Pagination, { usePaged } from '../components/Pagination'
 import { supabase } from '../supabaseClient'
 import { useToast } from '../context/ToastContext'
 import { formatNumber } from '../lib/constants'
+import { tableDoc } from '../lib/exporter'
 
 export default function Units() {
   const { notify } = useToast()
@@ -40,6 +43,18 @@ export default function Units() {
     load()
   }
 
+  const pager = usePaged(units, 10)
+  const STATUS = { occupied: 'Occupied', vacant: 'Vacant', maintenance: 'Maintenance' }
+  const getDoc = () => tableDoc({
+    title: 'Units',
+    subtitle: `${units.length} units`,
+    columns: [
+      { header: 'Unit' }, { header: 'Floor' }, { header: 'Bedrooms' }, { header: 'Rent (KES)', align: 'right' },
+      { header: 'Status' }, { header: 'Current Tenant' },
+    ],
+    rows: units.map((u) => [u.unit_number, u.floor || '', String(u.bedrooms ?? ''), formatNumber(u.rent_amount), STATUS[u.status] || u.status, u.tenant_name || '—']),
+  })
+
   return (
     <Layout
       title="Units"
@@ -48,8 +63,12 @@ export default function Units() {
     >
 
       <div className="card table-card">
-        <div className="table-card-head"><h3>All Units ({units.length})</h3></div>
-        <div className="table-scroll"><table>
+        <div className="table-card-head">
+          <h3>All Units ({units.length})</h3>
+          <div className="head-tools"><ExportButtons getDoc={getDoc} filename="units" disabled={units.length === 0} /></div>
+        </div>
+        <div className="table-scroll">
+        <table>
           <thead>
             <tr><th>Unit</th><th>Floor</th><th>Bedrooms</th><th>Rent (KES)</th><th>Status</th><th>Current Tenant</th><th></th></tr>
           </thead>
@@ -57,7 +76,7 @@ export default function Units() {
             {!loading && units.length === 0 && (
               <tr><td colSpan={7} className="empty-state">No units yet. Click "Add Unit" to create one.</td></tr>
             )}
-            {units.map((u) => (
+            {pager.pageRows.map((u) => (
               <tr key={u.id}>
                 <td className="cell-strong">{u.unit_number}</td>
                 <td>{u.floor}</td>
@@ -78,7 +97,9 @@ export default function Units() {
               </tr>
             ))}
           </tbody>
-        </table></div>
+        </table>
+        </div>
+        <Pagination {...pager} />
       </div>
     </Layout>
   )
